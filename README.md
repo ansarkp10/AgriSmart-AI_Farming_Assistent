@@ -22,6 +22,7 @@ Performance analytics and insights
 
 **Fertilizer Recommendation Model**
 
+
 Algorithm: Random Forest Classifier
 
 Features: N, P, K, pH, temperature, humidity, rainfall, soil moisture, crop type, season
@@ -31,6 +32,7 @@ Output: Fertilizer type (Urea, DAP, NPK, MOP, SSP)
 Accuracy: ~92% on test data
 
 **Irrigation Water Requirement Model**
+
 
 Algorithm: Random Forest Regressor
 
