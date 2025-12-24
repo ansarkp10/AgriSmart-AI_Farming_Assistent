@@ -1,0 +1,64 @@
+{% extends 'farming/base.html' %}
+
+{% block title %}Welcome to AgriSmart{% endblock %}
+
+{% block content %}
+<div class="row align-items-center">
+    <div class="col-md-6">
+        <h1 class="display-4 text-success">Welcome to AgriSmart</h1>
+        <p class="lead">AI-Driven Precision Farming Assistant</p>
+        <p>Optimize fertilizer usage, manage irrigation efficiently, and increase crop yield with our AI-powered recommendations.</p>
+        
+        {% if not user.is_authenticated %}
+            <div class="mt-4">
+                <a href="{% url 'register' %}" class="btn btn-success btn-lg me-2">
+                    <i class="fas fa-user-plus"></i> Get Started
+                </a>
+                <a href="{% url 'login' %}" class="btn btn-outline-success btn-lg">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+            </div>
+        {% else %}
+            <div class="mt-4">
+                <a href="{% url 'dashboard' %}" class="btn btn-success btn-lg">
+                    <i class="fas fa-tachometer-alt"></i> Go to Dashboard
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    <div class="col-md-6">
+        <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+             alt="Farming" class="img-fluid rounded shadow">
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4 text-center">
+        <div class="card border-0">
+            <div class="card-body">
+                <i class="fas fa-flask feature-icon"></i>
+                <h3 class="card-title">Fertilizer Recommendation</h3>
+                <p class="card-text">Get AI-based fertilizer recommendations based on soil nutrients and crop type.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 text-center">
+        <div class="card border-0">
+            <div class="card-body">
+                <i class="fas fa-tint feature-icon"></i>
+                <h3 class="card-title">Smart Irrigation</h3>
+                <p class="card-text">Optimize water usage with precise irrigation recommendations.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 text-center">
+        <div class="card border-0">
+            <div class="card-body">
+                <i class="fas fa-chart-line feature-icon"></i>
+                <h3 class="card-title">Data Analytics</h3>
+                <p class="card-text">Track your farm's performance and get insights for better decisions.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

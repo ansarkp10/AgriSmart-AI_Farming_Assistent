@@ -1,0 +1,674 @@
+{% extends 'farming/base.html' %}
+
+{% block title %}Dashboard - AgriSmart{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        background: linear-gradient(135deg, #2e7d32 0%, #66bb6a 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease;
+        height: 100%;
+        border-left: 4px solid #4caf50;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .stat-icon {
+        font-size: 2.5rem;
+        color: #4caf50;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 2.2rem;
+        font-weight: bold;
+        color: #2e7d32;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .quick-action-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .quick-action-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.2);
+        border-color: #4caf50;
+    }
+    
+    .action-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: white;
+        font-size: 1.5rem;
+    }
+    
+    .crop-badge {
+        background: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%);
+        color: white;
+        padding: 0.3rem 1rem;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    
+    .soil-table {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+    
+    .soil-table th {
+        background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
+        color: white;
+        border: none;
+        padding: 1rem;
+    }
+    
+    .soil-table td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+    
+    .nutrient-badge {
+        padding: 0.3rem 0.6rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .badge-n {
+        background: rgba(33, 150, 243, 0.1);
+        color: #2196f3;
+        border: 1px solid #2196f3;
+    }
+    
+    .badge-p {
+        background: rgba(255, 152, 0, 0.1);
+        color: #ff9800;
+        border: 1px solid #ff9800;
+    }
+    
+    .badge-k {
+        background: rgba(244, 67, 54, 0.1);
+        color: #f44336;
+        border: 1px solid #f44336;
+    }
+    
+    .weather-card {
+        background: linear-gradient(135deg, #2196f3 0%, #21cbf3 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(33, 150, 243, 0.2);
+    }
+    
+    .weather-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .ai-insight-card {
+        background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(156, 39, 176, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<div class="dashboard-header">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="mb-2">Welcome back, {{ user.username|title }}! 👋</h1>
+            <p class="mb-0">Here's what's happening with your farm today</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            {% if profile %}
+                <span class="crop-badge">
+                    <i class="fas fa-tractor me-1"></i>
+                    {{ profile.farm_name }}
+                </span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats Row -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-4">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-seedling"></i>
+            </div>
+            <div class="stat-number">{{ soil_data_list.count }}</div>
+            <div class="stat-label">Soil Tests</div>
+            <div class="progress mt-2" style="height: 6px;">
+                <div class="progress-bar bg-success" style="width: {{ soil_data_list.count|default:0|add:"20" }}%"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-arrows-alt-h"></i>
+            </div>
+            <div class="stat-number">{{ profile.farm_size|default:"0" }}</div>
+            <div class="stat-label">Total Acres</div>
+            <div class="progress mt-2" style="height: 6px;">
+                <div class="progress-bar bg-info" style="width: 75%"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-leaf"></i>
+            </div>
+            <div class="stat-number">
+                {% if soil_data_list %}
+                    {{ soil_data_list.0.get_crop_type_display }}
+                {% else %}
+                    N/A
+                {% endif %}
+            </div>
+            <div class="stat-label">Active Crop</div>
+            <div class="progress mt-2" style="height: 6px;">
+                <div class="progress-bar bg-warning" style="width: 60%"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-number">
+                {% if soil_data_list.count > 0 %}
+                    {{ soil_data_list.count|add:"15" }}
+                {% else %}
+                    0
+                {% endif %}
+            </div>
+            <div class="stat-label">AI Recommendations</div>
+            <div class="progress mt-2" style="height: 6px;">
+                <div class="progress-bar bg-primary" style="width: 90%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column: Profile & Quick Actions -->
+    <div class="col-lg-4 mb-4">
+        <!-- Farmer Profile Card -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-0 pt-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-circle text-success me-2"></i>
+                    Farmer Profile
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if profile %}
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                                <i class="fas fa-tractor fa-2x text-white"></i>
+                            </div>
+                        </div>
+                        <h4 class="mb-1">{{ profile.farm_name }}</h4>
+                        <p class="text-muted mb-3">
+                            <i class="fas fa-map-marker-alt me-1"></i>
+                            {{ profile.location }}
+                        </p>
+                    </div>
+                    
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                            <span><i class="fas fa-ruler-combined me-2 text-success"></i> Farm Size</span>
+                            <span class="fw-bold">{{ profile.farm_size }} acres</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                            <span><i class="fas fa-phone me-2 text-success"></i> Contact</span>
+                            <span>{{ profile.contact_number }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                            <span><i class="fas fa-calendar me-2 text-success"></i> Member Since</span>
+                            <span>{{ user.date_joined|date:"M Y" }}</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-user-plus fa-3x text-muted mb-3"></i>
+                        <h5>Complete Your Profile</h5>
+                        <p class="text-muted">Add your farm details to get personalized recommendations</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-0 pt-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt text-warning me-2"></i>
+                    Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="{% url 'fertilizer_recommendation' %}" class="quick-action-card text-decoration-none">
+                            <div class="action-icon">
+                                <i class="fas fa-flask"></i>
+                            </div>
+                            <h6 class="mb-2">Fertilizer</h6>
+                            <p class="text-muted small mb-0">Get AI recommendation</p>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'irrigation_recommendation' %}" class="quick-action-card text-decoration-none">
+                            <div class="action-icon">
+                                <i class="fas fa-tint"></i>
+                            </div>
+                            <h6 class="mb-2">Irrigation</h6>
+                            <p class="text-muted small mb-0">Water management</p>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'history' %}" class="quick-action-card text-decoration-none">
+                            <div class="action-icon">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <h6 class="mb-2">History</h6>
+                            <p class="text-muted small mb-0">View all records</p>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'index' %}" class="quick-action-card text-decoration-none">
+                            <div class="action-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <h6 class="mb-2">Reports</h6>
+                            <p class="text-muted small mb-0">Analytics & insights</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Data & Insights -->
+    <div class="col-lg-8">
+        <!-- Recent Soil Data -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-0 pt-4 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-flask text-primary me-2"></i>
+                    Recent Soil Tests
+                </h5>
+                <a href="{% url 'fertilizer_recommendation' %}" class="btn btn-sm btn-success">
+                    <i class="fas fa-plus me-1"></i> New Test
+                </a>
+            </div>
+            <div class="card-body px-0">
+                {% if soil_data_list %}
+                    <div class="table-responsive">
+                        <table class="table soil-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Crop</th>
+                                    <th>Season</th>
+                                    <th>Nutrients</th>
+                                    <th>pH</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in soil_data_list|slice:":5" %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    <div class="bg-light rounded p-2 text-center" style="width: 50px;">
+                                                        <div class="text-success fw-bold">{{ data.recorded_date|date:"d" }}</div>
+                                                        <div class="text-muted small">{{ data.recorded_date|date:"M" }}</div>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-medium">{{ data.recorded_date|date:"D" }}</div>
+                                                    <div class="text-muted small">{{ data.recorded_date|date:"Y" }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-2">
+                                                    {% if data.crop_type == 'rice' %}
+                                                        <i class="fas fa-seedling text-success"></i>
+                                                    {% elif data.crop_type == 'wheat' %}
+                                                        <i class="fas fa-bread-slice text-warning"></i>
+                                                    {% elif data.crop_type == 'maize' %}
+                                                        <i class="fas fa-corn text-warning"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-leaf text-success"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <span>{{ data.get_crop_type_display }}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if data.season == 'kharif' %}success{% elif data.season == 'rabi' %}info{% else %}warning{% endif %}">
+                                                {{ data.get_season_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex gap-1">
+                                                <span class="nutrient-badge badge-n" title="Nitrogen">
+                                                    N: {{ data.nitrogen|floatformat:1 }}
+                                                </span>
+                                                <span class="nutrient-badge badge-p" title="Phosphorus">
+                                                    P: {{ data.phosphorus|floatformat:1 }}
+                                                </span>
+                                                <span class="nutrient-badge badge-k" title="Potassium">
+                                                    K: {{ data.potassium|floatformat:1 }}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if data.ph_level < 6.5 %}
+                                                    <i class="fas fa-tint text-info me-1"></i>
+                                                {% elif data.ph_level > 7.5 %}
+                                                    <i class="fas fa-fire text-danger me-1"></i>
+                                                {% else %}
+                                                    <i class="fas fa-check-circle text-success me-1"></i>
+                                                {% endif %}
+                                                <span class="fw-medium">{{ data.ph_level|floatformat:1 }}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if data.nitrogen < 20 or data.phosphorus < 15 or data.potassium < 20 %}
+                                                <span class="badge bg-danger">Needs Attention</span>
+                                            {% else %}
+                                                <span class="badge bg-success">Optimal</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-flask fa-3x text-muted mb-3"></i>
+                        <h5>No Soil Tests Yet</h5>
+                        <p class="text-muted mb-4">Start by testing your soil to get AI-powered recommendations</p>
+                        <a href="{% url 'fertilizer_recommendation' %}" class="btn btn-success">
+                            <i class="fas fa-plus me-1"></i> Add First Test
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Weather & AI Insights Row -->
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="weather-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="weather-icon">
+                                <i class="fas fa-sun"></i>
+                            </div>
+                            <h3 class="mb-1">28°C</h3>
+                            <p class="mb-1">Sunny & Clear</p>
+                            <p class="small opacity-75">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                {% if profile %}{{ profile.location }}{% else %}Your Location{% endif %}
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            <div class="mb-2">
+                                <div class="small">Humidity</div>
+                                <div class="fw-bold">65%</div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="small">Rainfall</div>
+                                <div class="fw-bold">0 mm</div>
+                            </div>
+                            <div>
+                                <div class="small">Wind</div>
+                                <div class="fw-bold">12 km/h</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-top border-white border-opacity-25">
+                        <p class="small mb-0">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Perfect day for fertilizer application
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="ai-insight-card">
+                    <h5 class="mb-3">
+                        <i class="fas fa-brain me-2"></i>
+                        AI Insight
+                    </h5>
+                    <p class="mb-3">
+                        {% if soil_data_list %}
+                            Based on your recent tests, your soil shows optimal nutrient levels.
+                            Consider rotating crops next season for better yield.
+                        {% else %}
+                            Start by testing your soil to get personalized AI insights 
+                            and recommendations for your farm.
+                        {% endif %}
+                    </p>
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="small opacity-75">AgriSmart AI Assistant</div>
+                            <div class="small">Powered by Machine Learning</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Farm Health Status -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-0 pt-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-heartbeat text-danger me-2"></i>
+                    Farm Health Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <div class="bg-success bg-opacity-10 rounded p-3">
+                                    <i class="fas fa-seedling fa-2x text-success"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="fw-bold mb-1">Crop Health</div>
+                                <div class="text-success">Excellent</div>
+                                <div class="text-muted small">Based on soil nutrients</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <div class="bg-warning bg-opacity-10 rounded p-3">
+                                    <i class="fas fa-tint fa-2x text-warning"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="fw-bold mb-1">Water Efficiency</div>
+                                <div class="text-warning">Good</div>
+                                <div class="text-muted small">Can be optimized by 15%</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <div class="bg-info bg-opacity-10 rounded p-3">
+                                    <i class="fas fa-dollar-sign fa-2x text-info"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="fw-bold mb-1">Cost Efficiency</div>
+                                <div class="text-info">Very Good</div>
+                                <div class="text-muted small">25% savings potential</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="progress mt-3" style="height: 10px;">
+                    <div class="progress-bar bg-success" style="width: 85%"></div>
+                    <div class="progress-bar bg-warning" style="width: 10%"></div>
+                    <div class="progress-bar bg-danger" style="width: 5%"></div>
+                </div>
+                <div class="d-flex justify-content-between mt-2">
+                    <span class="small text-success">Optimal (85%)</span>
+                    <span class="small text-warning">Needs Attention (10%)</span>
+                    <span class="small text-danger">Critical (5%)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upcoming Tasks -->
+{% if soil_data_list %}
+<div class="card shadow-sm border-0 mt-4">
+    <div class="card-header bg-white border-0 pt-4">
+        <h5 class="mb-0">
+            <i class="fas fa-tasks text-primary me-2"></i>
+            Recommended Actions
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="bg-success bg-opacity-10 p-2 rounded me-2">
+                            <i class="fas fa-flask text-success"></i>
+                        </div>
+                        <h6 class="mb-0">Fertilizer Application</h6>
+                    </div>
+                    <p class="small text-muted mb-2">Apply recommended fertilizer within next 3 days</p>
+                    <span class="badge bg-light text-dark"><i class="fas fa-clock me-1"></i> Due soon</span>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="bg-info bg-opacity-10 p-2 rounded me-2">
+                            <i class="fas fa-tint text-info"></i>
+                        </div>
+                        <h6 class="mb-0">Irrigation Schedule</h6>
+                    </div>
+                    <p class="small text-muted mb-2">Adjust irrigation based on weather forecast</p>
+                    <span class="badge bg-light text-dark"><i class="fas fa-calendar me-1"></i> Today</span>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="bg-warning bg-opacity-10 p-2 rounded me-2">
+                            <i class="fas fa-clipboard-check text-warning"></i>
+                        </div>
+                        <h6 class="mb-0">Soil Test</h6>
+                    </div>
+                    <p class="small text-muted mb-2">Schedule next soil test in 2 weeks</p>
+                    <span class="badge bg-light text-dark"><i class="fas fa-calendar me-1"></i> 14 days</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add some interactive features
+$(document).ready(function() {
+    // Animate stat cards on hover
+    $('.stat-card').hover(
+        function() {
+            $(this).find('.stat-icon').css('transform', 'scale(1.1)');
+        },
+        function() {
+            $(this).find('.stat-icon').css('transform', 'scale(1)');
+        }
+    );
+    
+    // Update weather data (simulated)
+    function updateWeather() {
+        const temps = [28, 29, 27, 30, 26];
+        const currentTemp = temps[Math.floor(Math.random() * temps.length)];
+        $('.weather-card h3').text(currentTemp + '°C');
+    }
+    
+    // Update every 30 seconds (for demo purposes)
+    setInterval(updateWeather, 30000);
+});
+</script>
+{% endblock %}

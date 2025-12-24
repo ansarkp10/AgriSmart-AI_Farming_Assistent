@@ -1,0 +1,850 @@
+{% extends 'farming/base.html' %}
+
+{% block title %}AI Recommendations - AgriSmart{% endblock %}
+
+{% block extra_css %}
+<style>
+    .recommendation-header {
+        background: linear-gradient(135deg, #2e7d32 0%, #66bb6a 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .form-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        border-left: 4px solid #4caf50;
+    }
+    
+    .section-title {
+        color: #2e7d32;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-title i {
+        font-size: 1.2rem;
+    }
+    
+    .input-group-custom {
+        position: relative;
+    }
+    
+    .input-group-custom .form-control {
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+        height: 48px;
+    }
+    
+    .input-group-custom .form-control:focus {
+        border-color: #4caf50;
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    }
+    
+    .input-group-custom label {
+        font-weight: 500;
+        color: #555;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+    }
+    
+    .unit-badge {
+        position: absolute;
+        right: 15px;
+        top: 40px;
+        background: #f5f5f5;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        color: #666;
+        border: 1px solid #e0e0e0;
+    }
+    
+    .crop-select-card {
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .crop-select-card:hover,
+    .crop-select-card.active {
+        border-color: #4caf50;
+        background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e9 100%);
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.15);
+    }
+    
+    .crop-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: white;
+        font-size: 1.5rem;
+    }
+    
+    .nutrient-slider-container {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .nutrient-level {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .nutrient-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .nutrient-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+    
+    .icon-n {
+        background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
+    }
+    
+    .icon-p {
+        background: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%);
+    }
+    
+    .icon-k {
+        background: linear-gradient(135deg, #f44336 0%, #ef9a9a 100%);
+    }
+    
+    .icon-ph {
+        background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%);
+    }
+    
+    .nutrient-value {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #2e7d32;
+        min-width: 60px;
+        text-align: right;
+    }
+    
+    .nutrient-slider {
+        width: 100%;
+        height: 8px;
+        -webkit-appearance: none;
+        background: #e0e0e0;
+        border-radius: 4px;
+        outline: none;
+    }
+    
+    .nutrient-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #4caf50;
+        cursor: pointer;
+        border: 3px solid white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .nutrient-slider::-moz-range-thumb {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #4caf50;
+        cursor: pointer;
+        border: 3px solid white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .range-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 5px;
+        color: #666;
+        font-size: 0.85rem;
+    }
+    
+    .environment-card {
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .environment-card:hover {
+        border-color: #2196f3;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(33, 150, 243, 0.1);
+    }
+    
+    .env-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: white;
+        font-size: 1.5rem;
+    }
+    
+    .ai-process-card {
+        background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(156, 39, 176, 0.2);
+    }
+    
+    .process-step {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 0.5rem;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.1);
+    }
+    
+    .step-number {
+        width: 32px;
+        height: 32px;
+        background: white;
+        color: #9c27b0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .submit-btn {
+        background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
+        border: none;
+        padding: 15px 30px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 10px;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
+    }
+    
+    .submit-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(46, 125, 50, 0.4);
+    }
+    
+    .submit-btn:active {
+        transform: translateY(-1px);
+    }
+    
+    .error-message {
+        color: #f44336;
+        font-size: 0.85rem;
+        margin-top: 5px;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Recommendation Header -->
+<div class="recommendation-header">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="mb-2"><i class="fas fa-robot me-2"></i> AI Farming Assistant</h1>
+            <p class="mb-0">Get personalized fertilizer and irrigation recommendations powered by machine learning</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <div class="bg-white bg-opacity-20 rounded-pill px-3 py-1 d-inline-block">
+                <i class="fas fa-brain me-1"></i>
+                Powered by AI
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column: Form -->
+    <div class="col-lg-8">
+        <form method="post" id="recommendationForm">
+            {% csrf_token %}
+            
+            <!-- Step 1: Crop Selection -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-seedling"></i>
+                    Step 1: Select Your Crop & Season
+                </h3>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="input-group-custom">
+                            <label>Crop Type *</label>
+                            {{ form.crop_type }}
+                            <div class="error-message" id="cropError">Please select a crop type</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group-custom">
+                            <label>Season *</label>
+                            {{ form.season }}
+                            <div class="error-message" id="seasonError">Please select a season</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Crop Selection Cards -->
+                <div class="row g-3 mb-3">
+                    <div class="col-4 col-md-2">
+                        <div class="crop-select-card" data-crop="rice">
+                            <div class="crop-icon">
+                                <i class="fas fa-water"></i>
+                            </div>
+                            <div class="small">Rice</div>
+                        </div>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <div class="crop-select-card" data-crop="wheat">
+                            <div class="crop-icon">
+                                <i class="fas fa-bread-slice"></i>
+                            </div>
+                            <div class="small">Wheat</div>
+                        </div>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <div class="crop-select-card" data-crop="maize">
+                            <div class="crop-icon">
+                                <i class="fas fa-corn"></i>
+                            </div>
+                            <div class="small">Maize</div>
+                        </div>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <div class="crop-select-card" data-crop="cotton">
+                            <div class="crop-icon">
+                                <i class="fas fa-tshirt"></i>
+                            </div>
+                            <div class="small">Cotton</div>
+                        </div>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <div class="crop-select-card" data-crop="sugarcane">
+                            <div class="crop-icon">
+                                <i class="fas fa-candy-cane"></i>
+                            </div>
+                            <div class="small">Sugarcane</div>
+                        </div>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <div class="crop-select-card" data-crop="vegetables">
+                            <div class="crop-icon">
+                                <i class="fas fa-carrot"></i>
+                            </div>
+                            <div class="small">Vegetables</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 2: Soil Nutrients -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-flask"></i>
+                    Step 2: Enter Soil Nutrient Levels
+                </h3>
+                
+                <div class="nutrient-slider-container">
+                    <!-- Nitrogen -->
+                    <div class="nutrient-level">
+                        <div class="nutrient-label">
+                            <div class="nutrient-icon icon-n">
+                                <i class="fas fa-atom"></i>
+                            </div>
+                            <span>Nitrogen (N)</span>
+                        </div>
+                        <div class="nutrient-value" id="nitrogenValue">25 mg/kg</div>
+                    </div>
+                    <input type="range" min="0" max="100" value="25" class="nutrient-slider" id="nitrogenSlider">
+                    {{ form.nitrogen }}
+                    <div class="range-labels">
+                        <span>Low (0-20)</span>
+                        <span>Optimal (20-40)</span>
+                        <span>High (40+)</span>
+                    </div>
+                    
+                    <!-- Phosphorus -->
+                    <div class="nutrient-level">
+                        <div class="nutrient-label">
+                            <div class="nutrient-icon icon-p">
+                                <i class="fas fa-fire"></i>
+                            </div>
+                            <span>Phosphorus (P)</span>
+                        </div>
+                        <div class="nutrient-value" id="phosphorusValue">20 mg/kg</div>
+                    </div>
+                    <input type="range" min="0" max="60" value="20" class="nutrient-slider" id="phosphorusSlider">
+                    {{ form.phosphorus }}
+                    <div class="range-labels">
+                        <span>Low (0-15)</span>
+                        <span>Optimal (15-30)</span>
+                        <span>High (30+)</span>
+                    </div>
+                    
+                    <!-- Potassium -->
+                    <div class="nutrient-level">
+                        <div class="nutrient-label">
+                            <div class="nutrient-icon icon-k">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <span>Potassium (K)</span>
+                        </div>
+                        <div class="nutrient-value" id="potassiumValue">30 mg/kg</div>
+                    </div>
+                    <input type="range" min="0" max="80" value="30" class="nutrient-slider" id="potassiumSlider">
+                    {{ form.potassium }}
+                    <div class="range-labels">
+                        <span>Low (0-20)</span>
+                        <span>Optimal (20-40)</span>
+                        <span>High (40+)</span>
+                    </div>
+                    
+                    <!-- pH Level -->
+                    <div class="nutrient-level">
+                        <div class="nutrient-label">
+                            <div class="nutrient-icon icon-ph">
+                                <i class="fas fa-vial"></i>
+                            </div>
+                            <span>pH Level</span>
+                        </div>
+                        <div class="nutrient-value" id="phValue">6.5</div>
+                    </div>
+                    <input type="range" min="4" max="9" step="0.1" value="6.5" class="nutrient-slider" id="phSlider">
+                    {{ form.ph_level }}
+                    <div class="range-labels">
+                        <span>Acidic (4-6)</span>
+                        <span>Neutral (6-7.5)</span>
+                        <span>Alkaline (7.5-9)</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 3: Environmental Conditions -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-cloud-sun"></i>
+                    Step 3: Environmental Conditions
+                </h3>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="environment-card">
+                            <div class="env-icon">
+                                <i class="fas fa-thermometer-half"></i>
+                            </div>
+                            <div class="input-group-custom">
+                                <label>Temperature (°C) *</label>
+                                {{ form.temperature }}
+                                <div class="unit-badge">°C</div>
+                                <div class="error-message" id="tempError">Enter temperature</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="environment-card">
+                            <div class="env-icon">
+                                <i class="fas fa-tint"></i>
+                            </div>
+                            <div class="input-group-custom">
+                                <label>Humidity (%) *</label>
+                                {{ form.humidity }}
+                                <div class="unit-badge">%</div>
+                                <div class="error-message" id="humidityError">Enter humidity</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="environment-card">
+                            <div class="env-icon">
+                                <i class="fas fa-cloud-rain"></i>
+                            </div>
+                            <div class="input-group-custom">
+                                <label>Rainfall (mm) *</label>
+                                {{ form.rainfall }}
+                                <div class="unit-badge">mm</div>
+                                <div class="error-message" id="rainfallError">Enter rainfall</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="environment-card">
+                            <div class="env-icon">
+                                <i class="fas fa-seedling"></i>
+                            </div>
+                            <div class="input-group-custom">
+                                <label>Soil Moisture (%) *</label>
+                                {{ form.soil_moisture }}
+                                <div class="unit-badge">%</div>
+                                <div class="error-message" id="moistureError">Enter soil moisture</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Submit Button -->
+            <div class="text-center mt-4">
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-robot me-2"></i>
+                    Get AI Recommendation
+                </button>
+                <p class="text-muted mt-2 small">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Your data is secure and used only for generating recommendations
+                </p>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Right Column: Information -->
+    <div class="col-lg-4">
+        <!-- AI Process Card -->
+        <div class="ai-process-card mb-4">
+            <h4 class="mb-3">
+                <i class="fas fa-cogs me-2"></i>
+                How AI Works
+            </h4>
+            
+            <div class="process-step">
+                <div class="step-number">1</div>
+                <div>
+                    <h6 class="mb-1">Data Analysis</h6>
+                    <p class="small mb-0">AI analyzes your soil nutrient levels</p>
+                </div>
+            </div>
+            
+            <div class="process-step">
+                <div class="step-number">2</div>
+                <div>
+                    <h6 class="mb-1">Pattern Recognition</h6>
+                    <p class="small mb-0">Compares with thousands of farm datasets</p>
+                </div>
+            </div>
+            
+            <div class="process-step">
+                <div class="step-number">3</div>
+                <div>
+                    <h6 class="mb-1">ML Prediction</h6>
+                    <p class="small mb-0">Uses trained models for accurate predictions</p>
+                </div>
+            </div>
+            
+            <div class="process-step">
+                <div class="step-number">4</div>
+                <div>
+                    <h6 class="mb-1">Optimization</h6>
+                    <p class="small mb-0">Calculates optimal fertilizer & water needs</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Benefits Card -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="mb-3">
+                    <i class="fas fa-chart-line text-success me-2"></i>
+                    Benefits
+                </h5>
+                <div class="d-flex align-items-start mb-3">
+                    <div class="bg-success bg-opacity-10 p-2 rounded me-3">
+                        <i class="fas fa-dollar-sign text-success"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Cost Savings</h6>
+                        <p class="small text-muted mb-0">Reduce fertilizer costs by up to 30%</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start mb-3">
+                    <div class="bg-info bg-opacity-10 p-2 rounded me-3">
+                        <i class="fas fa-tint text-info"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Water Efficiency</h6>
+                        <p class="small text-muted mb-0">Optimize water usage by 25%</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start mb-3">
+                    <div class="bg-warning bg-opacity-10 p-2 rounded me-3">
+                        <i class="fas fa-seedling text-warning"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Yield Increase</h6>
+                        <p class="small text-muted mb-0">Improve crop yield by 15-20%</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start">
+                    <div class="bg-primary bg-opacity-10 p-2 rounded me-3">
+                        <i class="fas fa-leaf text-primary"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Sustainable Farming</h6>
+                        <p class="small text-muted mb-0">Reduce environmental impact</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Tips Card -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">
+                    <i class="fas fa-lightbulb text-warning me-2"></i>
+                    Quick Tips
+                </h5>
+                <div class="alert alert-light border mb-3">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-info-circle text-info me-2 mt-1"></i>
+                        <div>
+                            <h6 class="mb-1">Soil Testing</h6>
+                            <p class="small mb-0">Test soil every 2-3 weeks for best results</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-light border mb-3">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-cloud-sun text-primary me-2 mt-1"></i>
+                        <div>
+                            <h6 class="mb-1">Weather Consideration</h6>
+                            <p class="small mb-0">Check local weather before applying fertilizer</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-light border">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-clock text-success me-2 mt-1"></i>
+                        <div>
+                            <h6 class="mb-1">Timing is Key</h6>
+                            <p class="small mb-0">Apply fertilizer early morning for best absorption</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialize sliders
+    const sliders = {
+        'nitrogenSlider': 'nitrogenValue',
+        'phosphorusSlider': 'phosphorusValue', 
+        'potassiumSlider': 'potassiumValue',
+        'phSlider': 'phValue'
+    };
+    
+    // Update slider values and hidden inputs
+    $.each(sliders, function(sliderId, valueId) {
+        const $slider = $('#' + sliderId);
+        const $value = $('#' + valueId);
+        const $hiddenInput = $slider.siblings('input[type="hidden"], input[type="text"], input[type="number"]').first();
+        
+        // Set initial value
+        updateValue($slider, $value, $hiddenInput);
+        
+        // Update on slider change
+        $slider.on('input', function() {
+            updateValue($(this), $value, $hiddenInput);
+        });
+    });
+    
+    function updateValue($slider, $value, $hiddenInput) {
+        const value = $slider.val();
+        let displayValue = value;
+        
+        // Format display
+        if ($slider.attr('id') === 'phSlider') {
+            displayValue = parseFloat(value).toFixed(1);
+        } else {
+            displayValue = value + ' mg/kg';
+        }
+        
+        $value.text(displayValue);
+        $hiddenInput.val(value);
+        
+        // Update slider color based on value
+        updateSliderColor($slider, value);
+    }
+    
+    function updateSliderColor($slider, value) {
+        const sliderId = $slider.attr('id');
+        let optimalMin, optimalMax;
+        
+        // Define optimal ranges for each nutrient
+        switch(sliderId) {
+            case 'nitrogenSlider':
+                optimalMin = 20; optimalMax = 40;
+                break;
+            case 'phosphorusSlider':
+                optimalMin = 15; optimalMax = 30;
+                break;
+            case 'potassiumSlider':
+                optimalMin = 20; optimalMax = 40;
+                break;
+            case 'phSlider':
+                optimalMin = 6; optimalMax = 7.5;
+                break;
+        }
+        
+        // Update slider color
+        if (value < optimalMin) {
+            $slider.css('background', 'linear-gradient(90deg, #f44336 0%, #ffcdd2 100%)');
+        } else if (value > optimalMax) {
+            $slider.css('background', 'linear-gradient(90deg, #ff9800 0%, #ffe0b2 100%)');
+        } else {
+            $slider.css('background', 'linear-gradient(90deg, #4caf50 0%, #c8e6c9 100%)');
+        }
+    }
+    
+    // Crop selection cards
+    $('.crop-select-card').click(function() {
+        const crop = $(this).data('crop');
+        $('.crop-select-card').removeClass('active');
+        $(this).addClass('active');
+        $('#id_crop_type').val(crop).trigger('change');
+    });
+    
+    // Set active crop card based on select value
+    $('#id_crop_type').change(function() {
+        const crop = $(this).val();
+        $('.crop-select-card').removeClass('active');
+        $(`.crop-select-card[data-crop="${crop}"]`).addClass('active');
+    });
+    
+    // Initialize crop selection
+    if ($('#id_crop_type').val()) {
+        $(`.crop-select-card[data-crop="${$('#id_crop_type').val()}"]`).addClass('active');
+    }
+    
+    // Form validation
+    $('#recommendationForm').submit(function(e) {
+        let isValid = true;
+        $('.error-message').hide();
+        
+        // Validate required fields
+        const requiredFields = [
+            { id: '#id_crop_type', error: '#cropError' },
+            { id: '#id_season', error: '#seasonError' },
+            { id: '#id_temperature', error: '#tempError' },
+            { id: '#id_humidity', error: '#humidityError' },
+            { id: '#id_rainfall', error: '#rainfallError' },
+            { id: '#id_soil_moisture', error: '#moistureError' }
+        ];
+        
+        $.each(requiredFields, function(index, field) {
+            if (!$(field.id).val()) {
+                $(field.error).show();
+                $(field.id).addClass('is-invalid');
+                isValid = false;
+            } else {
+                $(field.id).removeClass('is-invalid');
+            }
+        });
+        
+        // Validate numeric ranges
+        const numericFields = [
+            { id: '#id_temperature', min: -10, max: 50 },
+            { id: '#id_humidity', min: 0, max: 100 },
+            { id: '#id_rainfall', min: 0, max: 1000 },
+            { id: '#id_soil_moisture', min: 0, max: 100 }
+        ];
+        
+        $.each(numericFields, function(index, field) {
+            const value = parseFloat($(field.id).val());
+            if (value < field.min || value > field.max) {
+                alert(`${$(field.id).attr('name')} must be between ${field.min} and ${field.max}`);
+                $(field.id).addClass('is-invalid');
+                isValid = false;
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            // Scroll to first error
+            $('html, body').animate({
+                scrollTop: $('.is-invalid').first().offset().top - 100
+            }, 500);
+        }
+        
+        return isValid;
+    });
+    
+    // Real-time validation
+    $('input, select').on('blur', function() {
+        if (!$(this).val()) {
+            $(this).addClass('is-invalid');
+        } else {
+            $(this).removeClass('is-invalid');
+        }
+    });
+    
+    // Add smooth scroll to form sections
+    $('.section-title').click(function() {
+        $('html, body').animate({
+            scrollTop: $(this).closest('.form-section').offset().top - 20
+        }, 500);
+    });
+    
+    // Initialize all sliders colors
+    $.each(sliders, function(sliderId) {
+        updateSliderColor($('#' + sliderId), $('#' + sliderId).val());
+    });
+});
+</script>
+{% endblock %}

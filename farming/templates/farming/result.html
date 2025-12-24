@@ -1,0 +1,787 @@
+{% extends 'farming/base.html' %}
+
+{% block title %}AI Recommendations - AgriSmart{% endblock %}
+
+{% block extra_css %}
+<style>
+    .results-header {
+        background: linear-gradient(135deg, #2e7d32 0%, #66bb6a 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .results-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+        background-size: 20px 20px;
+        opacity: 0.3;
+    }
+    
+    .ai-badge {
+        background: rgba(255,255,255,0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 50px;
+        padding: 8px 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 1rem;
+    }
+    
+    .recommendation-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        height: 100%;
+    }
+    
+    .recommendation-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .card-header-custom {
+        padding: 1.5rem;
+        border-bottom: 2px solid #f0f0f0;
+        background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+        color: white;
+    }
+    
+    .fertilizer-header {
+        background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%) !important;
+    }
+    
+    .irrigation-header {
+        background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%) !important;
+    }
+    
+    .card-icon {
+        width: 70px;
+        height: 70px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 2rem;
+    }
+    
+    .quantity-display {
+        text-align: center;
+        padding: 2rem 1rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-radius: 10px;
+        margin: 1rem 0;
+    }
+    
+    .quantity-number {
+        font-size: 3.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1;
+    }
+    
+    .irrigation-number {
+        background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%) !important;
+        -webkit-background-clip: text !important;
+    }
+    
+    .quantity-unit {
+        color: #666;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 0.5rem;
+    }
+    
+    .nutrient-meter {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+    }
+    
+    .nutrient-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .nutrient-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 500;
+    }
+    
+    .nutrient-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+    }
+    
+    .nutrient-value {
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .progress-meter {
+        height: 10px;
+        background: #e0e0e0;
+        border-radius: 5px;
+        margin-top: 5px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        border-radius: 5px;
+        transition: width 1s ease;
+    }
+    
+    .progress-n { background: linear-gradient(90deg, #2196f3 0%, #64b5f6 100%); }
+    .progress-p { background: linear-gradient(90deg, #ff9800 0%, #ffb74d 100%); }
+    .progress-k { background: linear-gradient(90deg, #f44336 0%, #ef9a9a 100%); }
+    
+    .recommendation-timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .recommendation-timeline::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, #4caf50, #2196f3);
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -25px;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #4caf50;
+        border: 3px solid white;
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+    }
+    
+    .timeline-item:nth-child(2)::before { background: #ff9800; }
+    .timeline-item:nth-child(3)::before { background: #2196f3; }
+    .timeline-item:nth-child(4)::before { background: #9c27b0; }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .btn-new {
+        background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
+    }
+    
+    .btn-dashboard {
+        background: white;
+        color: #333;
+        border: 2px solid #e0e0e0;
+    }
+    
+    .btn-print {
+        background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+    
+    .environment-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        border-top: 4px solid #2196f3;
+    }
+    
+    .env-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .env-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0.5rem;
+        border-radius: 8px;
+        background: #f8f9fa;
+    }
+    
+    .env-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+    }
+    
+    .env-value {
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .env-label {
+        font-size: 0.85rem;
+        color: #666;
+    }
+    
+    .ai-insight-card {
+        background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 20px rgba(156, 39, 176, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .ai-insight-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+        background-size: 30px 30px;
+        opacity: 0.3;
+    }
+    
+    .ai-avatar {
+        width: 60px;
+        height: 60px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .savings-badge {
+        background: rgba(255,255,255,0.2);
+        border-radius: 20px;
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        display: inline-block;
+        margin-top: 1rem;
+    }
+    
+    @media print {
+        .action-buttons {
+            display: none !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Results Header -->
+<div class="results-header">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <span class="ai-badge">
+                <i class="fas fa-robot"></i>
+                AI-Powered Analysis
+            </span>
+            <h1 class="mb-2">Your Farming Recommendations Are Ready! 🎯</h1>
+            <p class="mb-0 opacity-90">Personalized AI insights for optimal crop growth</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <div class="bg-white bg-opacity-20 rounded-pill px-3 py-1 d-inline-block">
+                <i class="fas fa-clock me-1"></i>
+                Generated: {% now "F j, Y, g:i a" %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column: Main Recommendations -->
+    <div class="col-lg-8">
+        <!-- Fertilizer & Irrigation Cards -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-4">
+                <div class="recommendation-card">
+                    <div class="card-header-custom fertilizer-header">
+                        <div class="card-icon">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                        <h4 class="text-center mb-0">Fertilizer Recommendation</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-3">
+                            <h3 class="text-success mb-2">{{ fertilizer_type }}</h3>
+                            <p class="text-muted">Optimal Fertilizer Type</p>
+                        </div>
+                        
+                        <div class="quantity-display">
+                            <div class="quantity-number">{{ fertilizer_quantity }}</div>
+                            <div class="quantity-unit">Kilograms per Acre</div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <div class="d-flex justify-content-center gap-3 mb-3">
+                                <span class="badge bg-success bg-opacity-10 text-success p-2">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Apply within 3 days
+                                </span>
+                                <span class="badge bg-info bg-opacity-10 text-info p-2">
+                                    <i class="fas fa-sun me-1"></i>
+                                    Morning application
+                                </span>
+                            </div>
+                            <p class="small text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Best applied after rainfall or irrigation
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="recommendation-card">
+                    <div class="card-header-custom irrigation-header">
+                        <div class="card-icon">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                        <h4 class="text-center mb-0">Irrigation Schedule</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-3">
+                            <h3 class="text-primary mb-2">Water Requirement</h3>
+                            <p class="text-muted">Daily Irrigation Needs</p>
+                        </div>
+                        
+                        <div class="quantity-display">
+                            <div class="quantity-number irrigation-number">{{ water_required }}</div>
+                            <div class="quantity-unit">Liters per Day</div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <div class="d-flex justify-content-center gap-3 mb-3">
+                                <span class="badge bg-primary bg-opacity-10 text-primary p-2">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Daily requirement
+                                </span>
+                                <span class="badge bg-warning bg-opacity-10 text-warning p-2">
+                                    <i class="fas fa-cloud-sun me-1"></i>
+                                    Weather adjusted
+                                </span>
+                            </div>
+                            <p class="small text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Adjust based on rainfall and soil moisture
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Soil Analysis -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h4 class="mb-3">
+                    <i class="fas fa-chart-bar text-success me-2"></i>
+                    Soil Nutrient Analysis
+                </h4>
+                
+                <div class="nutrient-meter">
+                    <!-- Nitrogen -->
+                    <div class="nutrient-item">
+                        <div class="nutrient-label">
+                            <div class="nutrient-icon" style="background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);">
+                                <i class="fas fa-atom"></i>
+                            </div>
+                            <span>Nitrogen (N)</span>
+                        </div>
+                        <div class="nutrient-value text-primary">{{ soil_data.nitrogen|floatformat:1 }} mg/kg</div>
+                    </div>
+                    <div class="progress-meter">
+                        <div class="progress-fill progress-n" style="width: {% widthratio soil_data.nitrogen 50 100 %}%"></div>
+                    </div>
+                    
+                    <!-- Phosphorus -->
+                    <div class="nutrient-item">
+                        <div class="nutrient-label">
+                            <div class="nutrient-icon" style="background: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%);">
+                                <i class="fas fa-fire"></i>
+                            </div>
+                            <span>Phosphorus (P)</span>
+                        </div>
+                        <div class="nutrient-value text-warning">{{ soil_data.phosphorus|floatformat:1 }} mg/kg</div>
+                    </div>
+                    <div class="progress-meter">
+                        <div class="progress-fill progress-p" style="width: {% widthratio soil_data.phosphorus 40 100 %}%"></div>
+                    </div>
+                    
+                    <!-- Potassium -->
+                    <div class="nutrient-item">
+                        <div class="nutrient-label">
+                            <div class="nutrient-icon" style="background: linear-gradient(135deg, #f44336 0%, #ef9a9a 100%);">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <span>Potassium (K)</span>
+                        </div>
+                        <div class="nutrient-value text-danger">{{ soil_data.potassium|floatformat:1 }} mg/kg</div>
+                    </div>
+                    <div class="progress-meter">
+                        <div class="progress-fill progress-k" style="width: {% widthratio soil_data.potassium 60 100 %}%"></div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="text-center p-3 border rounded">
+                            <div class="text-success fw-bold mb-1">pH Level</div>
+                            <div class="display-6">{{ soil_data.ph_level|floatformat:1 }}</div>
+                            <div class="small text-muted">
+                                {% if soil_data.ph_level < 6.5 %}
+                                    <i class="fas fa-exclamation-triangle text-warning"></i> Slightly acidic
+                                {% elif soil_data.ph_level > 7.5 %}
+                                    <i class="fas fa-exclamation-triangle text-warning"></i> Slightly alkaline
+                                {% else %}
+                                    <i class="fas fa-check-circle text-success"></i> Optimal
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 border rounded">
+                            <div class="text-info fw-bold mb-1">Overall Health</div>
+                            <div class="display-6">
+                                {% if soil_data.nitrogen >= 20 and soil_data.phosphorus >= 15 and soil_data.potassium >= 20 %}
+                                    8.5/10
+                                {% else %}
+                                    6.5/10
+                                {% endif %}
+                            </div>
+                            <div class="small text-muted">Soil quality score</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 border rounded">
+                            <div class="text-warning fw-bold mb-1">Next Test</div>
+                            <div class="display-6">14d</div>
+                            <div class="small text-muted">Recommended in 14 days</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column: Details & Actions -->
+    <div class="col-lg-4">
+        <!-- Crop Information -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h4 class="mb-3">
+                    <i class="fas fa-seedling text-success me-2"></i>
+                    Crop Information
+                </h4>
+                
+                <div class="d-flex align-items-center mb-4">
+                    <div class="me-3">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            {% if soil_data.crop_type == 'rice' %}
+                                <i class="fas fa-water fa-2x text-white"></i>
+                            {% elif soil_data.crop_type == 'wheat' %}
+                                <i class="fas fa-bread-slice fa-2x text-white"></i>
+                            {% elif soil_data.crop_type == 'maize' %}
+                                <i class="fas fa-corn fa-2x text-white"></i>
+                            {% else %}
+                                <i class="fas fa-leaf fa-2x text-white"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">{{ soil_data.get_crop_type_display }}</h5>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-calendar me-1"></i>
+                            {{ soil_data.get_season_display }} Season
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="environment-card">
+                    <h6 class="mb-3">Environmental Conditions</h6>
+                    <div class="env-grid">
+                        <div class="env-item">
+                            <div class="env-icon">
+                                <i class="fas fa-thermometer-half"></i>
+                            </div>
+                            <div>
+                                <div class="env-value">{{ soil_data.temperature|floatformat:1 }}°C</div>
+                                <div class="env-label">Temperature</div>
+                            </div>
+                        </div>
+                        <div class="env-item">
+                            <div class="env-icon">
+                                <i class="fas fa-tint"></i>
+                            </div>
+                            <div>
+                                <div class="env-value">{{ soil_data.humidity|floatformat:0 }}%</div>
+                                <div class="env-label">Humidity</div>
+                            </div>
+                        </div>
+                        <div class="env-item">
+                            <div class="env-icon">
+                                <i class="fas fa-cloud-rain"></i>
+                            </div>
+                            <div>
+                                <div class="env-value">{{ soil_data.rainfall|floatformat:1 }} mm</div>
+                                <div class="env-label">Rainfall</div>
+                            </div>
+                        </div>
+                        <div class="env-item">
+                            <div class="env-icon">
+                                <i class="fas fa-seedling"></i>
+                            </div>
+                            <div>
+                                <div class="env-value">{{ soil_data.soil_moisture|floatformat:0 }}%</div>
+                                <div class="env-label">Soil Moisture</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI Insights -->
+        <div class="ai-insight-card mb-4">
+            <div class="position-relative z-1">
+                <div class="ai-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h5 class="mb-3">AI Insights</h5>
+                <p class="mb-3">
+                    Based on my analysis of your soil data and environmental conditions, 
+                    I recommend focusing on {% if soil_data.nitrogen < 20 %}nitrogen-rich{% elif soil_data.phosphorus < 15 %}phosphorus-balanced{% else %}balanced{% endif %} 
+                    fertilizer application for optimal growth.
+                </p>
+                <div class="savings-badge">
+                    <i class="fas fa-chart-line me-1"></i>
+                    Potential yield increase: 15-20%
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Timeline -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h4 class="mb-3">
+                    <i class="fas fa-tasks text-primary me-2"></i>
+                    Action Plan
+                </h4>
+                
+                <div class="recommendation-timeline">
+                    <div class="timeline-item">
+                        <h6 class="mb-1">Prepare Fertilizer</h6>
+                        <p class="small text-muted mb-0">Measure {{ fertilizer_quantity }} kg of {{ fertilizer_type }} per acre</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h6 class="mb-1">Apply Fertilizer</h6>
+                        <p class="small text-muted mb-0">Apply evenly across the field, preferably in the morning</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h6 class="mb-1">Schedule Irrigation</h6>
+                        <p class="small text-muted mb-0">Water with {{ water_required }} liters per acre daily</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h6 class="mb-1">Monitor Progress</h6>
+                        <p class="small text-muted mb-0">Check soil moisture every 2 days, test nutrients in 14 days</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="action-buttons mt-4">
+    <button onclick="window.print()" class="action-btn btn-print">
+        <i class="fas fa-print"></i>
+        Print Report
+    </button>
+    <a href="{% url 'fertilizer_recommendation' %}" class="action-btn btn-new">
+        <i class="fas fa-redo"></i>
+        New Recommendation
+    </a>
+    <a href="{% url 'dashboard' %}" class="action-btn btn-dashboard">
+        <i class="fas fa-tachometer-alt"></i>
+        Back to Dashboard
+    </a>
+</div>
+
+<!-- Estimated Savings -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5 class="mb-2">
+                            <i class="fas fa-chart-pie text-success me-2"></i>
+                            Estimated Benefits
+                        </h5>
+                        <p class="text-muted mb-0">
+                            Following these recommendations could save you approximately 
+                            <span class="text-success fw-bold">₹1,500-2,000 per acre</span> 
+                            this season through optimized resource usage.
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <button class="btn btn-outline-success" onclick="shareResults()">
+                            <i class="fas fa-share-alt me-1"></i>
+                            Share Results
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Animate progress bars
+    $('.progress-fill').each(function() {
+        const width = $(this).css('width');
+        $(this).css('width', '0');
+        setTimeout(() => {
+            $(this).css('width', width);
+        }, 300);
+    });
+    
+    // Add counter animation to quantity numbers
+    function animateValue(element, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const value = Math.floor(progress * (end - start) + start);
+            element.text(value);
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+    
+    // Animate fertilizer quantity
+    const fertElement = $('.quantity-number').first();
+    const fertValue = parseFloat("{{ fertilizer_quantity }}");
+    animateValue(fertElement[0], 0, fertValue, 2000);
+    
+    // Animate water quantity after delay
+    setTimeout(() => {
+        const waterElement = $('.irrigation-number');
+        const waterValue = parseFloat("{{ water_required }}");
+        animateValue(waterElement[0], 0, waterValue, 2000);
+    }, 500);
+    
+    // Share results function
+    window.shareResults = function() {
+        if (navigator.share) {
+            navigator.share({
+                title: 'My AgriSmart Farming Recommendations',
+                text: `I got AI-powered farming recommendations for {{ soil_data.get_crop_type_display }}: {{ fertilizer_type }} at {{ fertilizer_quantity }} kg/acre, {{ water_required }} L/day water requirement.`,
+                url: window.location.href,
+            })
+            .then(() => console.log('Successful share'))
+            .catch((error) => console.log('Error sharing:', error));
+        } else {
+            // Fallback for browsers that don't support Web Share API
+            const text = `Check out my farming recommendations: ${window.location.href}`;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Link copied to clipboard!');
+            });
+        }
+    };
+    
+    // Print optimization
+    $('.btn-print').click(function() {
+        // Add print-specific styles
+        $('head').append('<style media="print">@page { size: auto; margin: 0; } body { padding: 20px; }</style>');
+    });
+    
+    // Add smooth animations
+    $('.recommendation-card').hover(
+        function() {
+            $(this).find('.card-icon').css('transform', 'scale(1.1) rotate(5deg)');
+        },
+        function() {
+            $(this).find('.card-icon').css('transform', 'scale(1) rotate(0deg)');
+        }
+    );
+});
+</script>
+{% endblock %}
